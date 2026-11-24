@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #f5f7f4;
+  --color-surface: #ffffff;
+  --color-ink: #17352f;
+  --color-ink-soft: #4a6560;
+  --color-muted: #6b807b;
+  --color-line: #dde5e0;
+  --color-teal: #187b70;
+  --color-teal-dark: #11615a;
+  --color-teal-soft: #e3f1ee;
+  --color-sand: #f4ede2;
+  --color-sand-dark: #8a6a3d;
+  --color-rose-soft: #f8ebe8;
+  --color-rose-ink: #8c3b2e;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+  --radius-card: 1.25rem;
+}
+
+html {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-teal);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(0.72); }
+  40% { transform: scale(1); }
+}
+.breathe { animation: breathe 10s ease-in-out infinite; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise 0.35s ease-out both; }
+
+.sr-only-focusable:not(:focus) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+}
+
+dialog::backdrop { background: rgb(23 53 47 / 0.35); backdrop-filter: blur(2px); }

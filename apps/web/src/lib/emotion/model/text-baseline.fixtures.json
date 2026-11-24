@@ -1,0 +1,74 @@
+[
+  {
+    "text": "I am so happy and grateful for my friends today",
+    "probs": [
+      0.66887,
+      0.19509,
+      0.01782,
+      0.00863,
+      0.01011,
+      0.03544,
+      0.06404
+    ]
+  },
+  {
+    "text": "This is really annoying, nothing works",
+    "probs": [
+      0.03115,
+      0.00353,
+      0.00876,
+      0.04978,
+      0.89304,
+      0.00032,
+      0.01342
+    ]
+  },
+  {
+    "text": "I'm terrified about my exam tomorrow",
+    "probs": [
+      0.17798,
+      0.08734,
+      0.02522,
+      0.32884,
+      0.05648,
+      0.00419,
+      0.31995
+    ]
+  },
+  {
+    "text": "I feel so sad and alone",
+    "probs": [
+      6e-05,
+      0.99975,
+      3e-05,
+      5e-05,
+      1e-05,
+      4e-05,
+      5e-05
+    ]
+  },
+  {
+    "text": "What a relief, it finally worked out",
+    "probs": [
+      0.26412,
+      0.19705,
+      0.03705,
+      0.04659,
+      0.05217,
+      0.04667,
+      0.35635
+    ]
+  },
+  {
+    "text": "The meeting is at 3pm",
+    "probs": [
+      0.07771,
+      0.04038,
+      0.1988,
+      0.03815,
+      0.17888,
+      0.02784,
+      0.43823
+    ]
+  }
+]

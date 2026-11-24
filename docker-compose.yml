@@ -1,0 +1,13 @@
+# Runs the web app in a container against your Supabase project.
+# For a fully local database, use the Supabase CLI instead: `npx supabase start`
+# (see docs/HANDBOOK.md, "Optional: run Supabase locally").
+services:
+  web:
+    build:
+      context: ./apps/web
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+    env_file: ./apps/web/.env.local
+    ports:
+      - "3000:3000"

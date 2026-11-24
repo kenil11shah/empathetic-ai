@@ -1,0 +1,146 @@
+{
+  "dataset": "GoEmotions (Demszky et al., 2020), single-taxonomy-label subset",
+  "train_counts": {
+    "joy": 15452,
+    "sadness": 2492,
+    "anger": 1615,
+    "fear_anxiety": 577,
+    "frustration": 3169,
+    "calm": 91,
+    "neutral": 13150
+  },
+  "n_train": 36546,
+  "n_dev": 4543,
+  "n_test": 4579,
+  "train_filtering": {
+    "dropped_conflict": 2600,
+    "dropped_unmapped": 4264
+  },
+  "chosen_C": 1.0,
+  "dev_macro_f1": 0.4438,
+  "test_macro_f1": 0.4674,
+  "test_accuracy": 0.6174,
+  "test_per_class": {
+    "joy": {
+      "precision": 0.8639,
+      "recall": 0.6856,
+      "f1-score": 0.7645,
+      "support": 1880.0
+    },
+    "sadness": {
+      "precision": 0.43,
+      "recall": 0.5757,
+      "f1-score": 0.4923,
+      "support": 304.0
+    },
+    "anger": {
+      "precision": 0.3955,
+      "recall": 0.5467,
+      "f1-score": 0.459,
+      "support": 225.0
+    },
+    "fear_anxiety": {
+      "precision": 0.3432,
+      "recall": 0.7073,
+      "f1-score": 0.4622,
+      "support": 82.0
+    },
+    "frustration": {
+      "precision": 0.291,
+      "recall": 0.4614,
+      "f1-score": 0.3569,
+      "support": 427.0
+    },
+    "calm": {
+      "precision": 0.0638,
+      "recall": 0.375,
+      "f1-score": 0.1091,
+      "support": 8.0
+    },
+    "neutral": {
+      "precision": 0.6653,
+      "recall": 0.5941,
+      "f1-score": 0.6277,
+      "support": 1653.0
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "joy",
+      "sadness",
+      "anger",
+      "fear_anxiety",
+      "frustration",
+      "calm",
+      "neutral"
+    ],
+    "rows_true_cols_pred": [
+      [
+        1289,
+        67,
+        39,
+        30,
+        127,
+        30,
+        298
+      ],
+      [
+        18,
+        175,
+        16,
+        11,
+        29,
+        3,
+        52
+      ],
+      [
+        5,
+        8,
+        123,
+        3,
+        55,
+        0,
+        31
+      ],
+      [
+        3,
+        5,
+        3,
+        58,
+        6,
+        1,
+        6
+      ],
+      [
+        28,
+        35,
+        50,
+        10,
+        197,
+        1,
+        106
+      ],
+      [
+        0,
+        1,
+        2,
+        1,
+        0,
+        3,
+        1
+      ],
+      [
+        149,
+        116,
+        78,
+        56,
+        263,
+        9,
+        982
+      ]
+    ]
+  },
+  "temperature": 0.75,
+  "ece_before_calibration": 0.0935,
+  "ece_after_calibration": 0.04
+}
