@@ -2,7 +2,7 @@
 
 The what, how and why of the project, written so you can explain every decision in a presentation or interview. Numbers in this book come from the code and test runs as of 25 Nov 2026. Nothing is estimated.
 
-**Live demo:** https://empathetic-ai-ten.vercel.app · **Code:** https://github.com/kenil11shah/empathetic-ai
+**Live demo:** https://empathetic-ai-ten.vercel.app
 
 ---
 
