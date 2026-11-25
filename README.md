@@ -2,6 +2,8 @@
 
 A safety-constrained, emotion-aware AI companion for everyday well-being. People can type or speak what they're going through, feel heard, notice patterns, and turn everyday problems into small steps. They stay in control of their data the whole time.
 
+**Live demo:** https://empathetic-ai-ten.vercel.app (try it as a guest, no sign-up needed)
+
 > **Research prototype.** Not a clinical service. It does not diagnose, treat or monitor anyone, and it never contacts anyone automatically.
 
 ![Chat with an approval card](docs/screenshots/chat.png)
@@ -29,7 +31,7 @@ apps/web/                 Next.js app (UI + /api/v1 route handlers)
   scripts/check-migration.mjs   runs migrations in PGlite and checks RLS/idempotency
 services/ml/              training + evaluation for the text baseline
 supabase/migrations/      schema, RLS policies, approval RPC, sample-data RPCs
-docs/                     handbook, research book, traceability, screenshots
+docs/                     deployment guide, research book, traceability, screenshots
 ```
 
 ## Quick start (local)
@@ -41,7 +43,7 @@ cp .env.example .env.local      # add your Supabase URL + keys (LLM key optional
 npm run dev                     # http://localhost:3000
 ```
 
-Run `supabase/setup.sql` (all migrations in one script) in the Supabase SQL editor first. Without an LLM key the app runs in a clearly labelled **demo mode**. The full walkthrough, including Vercel deployment, is in [docs/HANDBOOK.md](docs/HANDBOOK.md).
+Run `supabase/setup.sql` (all migrations in one script) in the Supabase SQL editor first. Without an LLM key the app runs in a clearly labelled **demo mode**. The full walkthrough, including Vercel deployment, is in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Quality checks
 
@@ -50,10 +52,10 @@ cd apps/web
 npm run verify     # lint + typecheck + 49 tests + database checks + production build
 ```
 
-| Check | Result at handoff |
+| Check | Result |
 | --- | --- |
 | Unit and integration tests (Vitest) | 49 / 49 passing |
-| Migration, RLS, idempotency, keep-alive and cascade checks (PGlite) | 14 / 14 passing |
+| Migration, grants, RLS, idempotency, keep-alive and cascade checks (PGlite) | 18 / 18 passing |
 | TypeScript | no errors |
 | ESLint | 0 errors (11 warnings for intentional data-loading effects) |
 | `next build` | succeeds |
@@ -66,7 +68,7 @@ A daily Vercel cron (`apps/web/vercel.json` → `/api/v1/keepalive`) touches the
 
 ## Docs
 
-- [Deployment handbook](docs/HANDBOOK.md): accounts, keys, database, Vercel, troubleshooting
+- [Deployment guide](docs/DEPLOYMENT.md): accounts, keys, database, Vercel, troubleshooting
 - [Research book](docs/RESEARCH_BOOK.md): the what, how and why, results, limitations, interview prep
 - [Requirements traceability](docs/TRACEABILITY.md): every PRD requirement mapped to code and tests
 

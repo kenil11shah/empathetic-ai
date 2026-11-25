@@ -75,7 +75,7 @@ function LoginInner() {
         <p className="mt-1 text-ink-soft">For adults 18 and over.</p>
         {!configured && (
           <div className="mt-4">
-            <ErrorNote message="The database isn't connected yet. Add the Supabase environment variables (see the handbook)." />
+            <ErrorNote message="The database isn't connected yet. Add the Supabase environment variables (see docs/DEPLOYMENT.md)." />
           </div>
         )}
         <Card className="mt-6">

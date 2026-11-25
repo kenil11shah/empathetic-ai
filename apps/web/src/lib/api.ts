@@ -43,7 +43,7 @@ export function withAuth(fn: (ctx: Ctx, req: NextRequest, params: Params) => Pro
     const requestId = crypto.randomUUID();
     try {
       if (!publicEnv.supabaseUrl || !publicEnv.supabaseKey) {
-        throw new ApiError(503, "not_configured", "The database is not configured yet. See the setup handbook.");
+        throw new ApiError(503, "not_configured", "The database is not configured yet. See docs/DEPLOYMENT.md.");
       }
       const supabase = await createClient();
       const {

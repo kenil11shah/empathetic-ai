@@ -1,6 +1,6 @@
 # Runs the web app in a container against your Supabase project.
 # For a fully local database, use the Supabase CLI instead: `npx supabase start`
-# (see docs/HANDBOOK.md, "Optional: run Supabase locally").
+# (see README.md).
 services:
   web:
     build:

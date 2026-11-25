@@ -11,7 +11,7 @@ export const DELETE = withAuth(async (ctx, req) => {
   void body;
   const admin = createAdminClient();
   if (!admin) {
-    throw new ApiError(503, "not_configured", "Account deletion needs the server secret key. See the handbook (SUPABASE_SECRET_KEY).");
+    throw new ApiError(503, "not_configured", "Account deletion needs the server secret key. See docs/DEPLOYMENT.md (SUPABASE_SECRET_KEY).");
   }
   const { error } = await admin.auth.admin.deleteUser(ctx.user.id);
   if (error) throw new ApiError(500, "delete_failed", "We couldn't delete your account just now. Please try again.");

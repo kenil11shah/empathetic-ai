@@ -1,6 +1,8 @@
 # Empathetic AI — Research Book
 
-The what, how and why of the project, written so you can explain every decision in a presentation or interview. Numbers in this book come from the code and test runs at handoff (24 Nov 2026). Nothing is estimated.
+The what, how and why of the project, written so you can explain every decision in a presentation or interview. Numbers in this book come from the code and test runs as of 25 Nov 2026. Nothing is estimated.
+
+**Live demo:** https://empathetic-ai-ten.vercel.app · **Code:** https://github.com/kenil11shah/empathetic-ai
 
 ---
 
@@ -14,7 +16,7 @@ The what, how and why of the project, written so you can explain every decision 
 
 My approach has four layers. First, an **independent safety policy** runs before any model: deterministic rules with negation, history, fiction and third-party handling, plus reviewed templates for high-risk moments. Second, an **emotion and intent engine** fuses three signals: a TF-IDF + logistic regression model I trained on 36k GoEmotions examples (macro-F1 0.47 across seven classes), an optional DistilRoBERTa model, and LLM zero-shot probabilities. It abstains when signals disagree, and the user's correction always wins. Third, a **deterministic strategy layer** turns mode + intent + safety route into permissions: Just Listen never proposes tasks unless you ask. Fourth, **human-in-the-loop actions**: the model can only propose, and approval runs in one idempotent database transaction with ownership and expiry checks.
 
-Everything is privacy-by-default: Row Level Security on every table, private chats never stored, memory off until opted in, raw audio never kept, full export and deletion. It's verified by 45 automated tests plus 12 database security checks, and it's a research prototype, not a clinical tool.
+Everything is privacy-by-default: Row Level Security on every table, private chats never stored, memory off until opted in, raw audio never kept, full export and deletion. It's verified by 49 automated tests plus 18 database checks, runs 24/7 on free tiers, and it's a research prototype, not a clinical tool.
 
 ---
 
@@ -35,7 +37,7 @@ Everything is privacy-by-default: Row Level Security on every table, private cha
 No diagnosis or treatment, no clinical risk scores, no emergency dispatch, no passive microphone or webcam, no streaks or engagement maximisation, no social features, no minors.
 
 ### Success definition
-A user can complete a supportive session, correct an emotion inference, approve an action, inspect or delete their data, and reach crisis resources, all without a broken flow. Each of these is covered in the smoke-test checklist (Handbook Part 8).
+A user can complete a supportive session, correct an emotion inference, approve an action, inspect or delete their data, and reach crisis resources, all without a broken flow. Each of these is covered in the smoke-test checklist (`docs/DEPLOYMENT.md`, Part 5).
 
 ---
 
@@ -46,7 +48,7 @@ A user can complete a supportive session, correct an emotion inference, approve 
 | Landing `/` | Promise, example conversation, "is / isn't" box, disclaimer | Honest scope before sign-up |
 | `/help` | Crisis resources for IN, US, UK, CA, AU and a global directory | Help must never sit behind sign-in |
 | Login | Email + password, **guest** (anonymous) sign-in, password reset | One-click trial for recruiters |
-| Onboarding | Adult attestation, AI disclosure, country (for resources), default mode, separate consents | Consent before processing. Every optional step can be skipped |
+| Onboarding (5 steps) | Adult attestation and AI disclosure, about you (name, country for resources), default mode, **someone you trust** (optional, editable later), separate consents | Consent before processing. Every optional step can be skipped |
 | Dashboard | Talk-it-through CTA, quick check-in, tasks, recent chats, journal | One place to start from |
 | Chat | Modes, private toggle, emotion hint with correction, approval cards, help panel, voice, read-aloud, feedback | The core loop |
 | Journal | Write or dictate, prompts, AI summary draft (editable, labelled) | Reflection without losing ownership |
@@ -54,7 +56,7 @@ A user can complete a supportive session, correct an emotion inference, approve 
 | Tasks | Manual + approved tasks, pending suggestions | No guilt for missed tasks |
 | Insights | Trends with gaps, observations, distributions, inferred-vs-self-report separation, weekly reflection | Honest analytics |
 | Wellness | Six activities with timer and stop, plus "did this help?" | Optional, no breath-holding |
-| Safety centre | Resources, trusted people (manual call only), personal safety plan | User decides who is safe |
+| Safety centre | Resources, trusted people with one-tap **Email / Text / Call**, personal safety plan | User decides who is safe, and the user presses send |
 | Settings | Profile, consents, memory manager, account, export, sample data, delete | Full control |
 
 **Journeys covered:** A (express → act), B (reflect), C (sensitive conversation), D (privacy). See PRD §03.
@@ -95,6 +97,7 @@ flowchart LR
 | Speech | Groq Whisper `whisper-large-v3-turbo` | Same key as the LLM, multilingual |
 | Orchestration | Custom state machine | PRD: "Custom state machine initially". Deterministic policy stays outside the LLM |
 | Tests | Vitest + PGlite (Postgres in WASM) | Runs the real migration SQL in CI without Docker |
+| Hosting | **Vercel Hobby** + a daily Vercel cron | Free, never sleeps, redeploys on every push to `main` |
 
 ### 4.3 Request lifecycle: one chat turn (`POST /api/v1/sessions/{id}/messages`)
 
@@ -121,6 +124,26 @@ Approval is a **separate endpoint** (`/proposals/{id}/approve`). Nothing in the 
 
 ---
 
+### 4.4 Always on, on free tiers
+
+The app is linked from a portfolio and LinkedIn, so anyone can open it at any time, sign up, leave, and sign in again weeks later with their data intact.
+
+| Risk | Design |
+| --- | --- |
+| Supabase pauses free projects after about a week of inactivity | A daily Vercel cron (`vercel.json` → `GET /api/v1/keepalive`) calls `keepalive()`, which writes to the database |
+| Guest accounts filling the free database | The same job deletes anonymous users older than 30 days (rows cascade). Email accounts are kept |
+| Groq free quota is per model per day | The LLM adapter walks a chain: `gpt-oss-120b` → `llama-3.3-70b-versatile` → `qwen3-32b` → `llama-3.1-8b-instant`. A 429 moves to the next model at once; 5xx errors retry with jitter |
+| Every model busy | The turn still succeeds with the deterministic responder and a "busy" label. Safety routing and resources never need the LLM |
+| Cold starts / sleeping hosts | Vercel serverless doesn't sleep like free container hosts do |
+
+**Why Groq.** It has a permanent free tier, very fast inference, OpenAI-compatible endpoints and Whisper on the same key. Alternatives I compared: Cerebras (fast, but no permanent free tier) and Gemini's free tier (prompts may be used for human review, which isn't acceptable for well-being conversations). The provider is one env var away from being swapped.
+
+### 4.5 A production bug worth telling
+
+After deploying, onboarding failed with "We couldn't save that just now". The logs showed Postgres error `42501` (permission denied) on the first insert. The cause: from 2026, new Supabase projects no longer grant the API roles access to new tables in `public`, so RLS policies were never even reached. My migration test had been granting access itself, so it hid the problem. The fix was a migration with explicit, least-privilege grants (`authenticated` only), a test that relies on the migration's grants and simulates the onboarding writes, and a clearer 503 message when the database setup is incomplete. Lesson: tests must start from the same permissions as production.
+
+---
+
 ## 5. Data model and API
 
 ### 5.1 Tables (all user-owned rows cascade from `auth.users`)
@@ -132,6 +155,9 @@ Approval is a **separate endpoint** (`/proposals/{id}/approve`). Nothing in the 
 **RPCs:**
 - `approve_proposal(p_id, p_payload)`: `SECURITY INVOKER`, so RLS still applies. It locks the row (`FOR UPDATE`), replays if already approved, rejects if not pending, marks expired with no side effect, executes by type, stores the result and writes the audit row, all in one transaction.
 - `seed_sample_data()` / `remove_sample_data()`: synthetic rows tagged `sample` so visitors can explore Insights.
+- `keepalive()`: `SECURITY DEFINER`, touches a one-row heartbeat table. The only thing a signed-out visitor (`anon`) may call.
+
+**Grants:** since 2026, new Supabase projects no longer expose `public` tables to the Data API automatically. Migration `0005_grants.sql` grants `select/insert/update/delete` on the app tables to `authenticated` only. RLS then decides which rows. `anon` gets no table access at all.
 
 ### 5.2 API (all under `/api/v1`)
 
@@ -151,7 +177,7 @@ Approval is a **separate endpoint** (`/proposals/{id}/approve`). Nothing in the 
 | `POST /wellness-sessions` | Activity log |
 | `GET /resources` (public), `GET/PUT /safety-plan`, `POST/DELETE /trusted-contacts` | Safety |
 | `GET/PATCH /me`, `POST /onboarding`, `GET/PUT /consents` | Profile and consent |
-| `POST /export?format=json|text`, `DELETE /account`, `POST/DELETE /sample-data`, `GET /health` | Data rights and ops |
+| `POST /export?format=json|text`, `DELETE /account`, `POST/DELETE /sample-data`, `GET /health`, `GET /keepalive` (daily cron) | Data rights and ops |
 
 **Errors** always look like `{ "error": { "code", "message", "request_id" } }` with 400/401/403/404/409/413/429/503. They never include stack traces or content.
 
@@ -234,7 +260,7 @@ Eight intents (vent, reflect, seek advice, plan, celebrate, calm, casual, unknow
 2. **Never route on emotion alone**: "I'm furious" is ordinary, and being overwhelmed is distress, not danger.
 3. **Escalate-only combination**: the LLM's opinion can raise the route (capped at *concern*). Only explicit statements caught by rules reach *immediate*.
 4. **Reviewed patterns for high risk**: no generated text for the riskiest moments.
-5. **No auto-contact, ever**: no code path sends SMS, email or calls.
+5. **No auto-contact, ever**: no code path sends SMS, email or calls. The trusted-person buttons only open the user's own email, SMS or phone app with a short draft, and the user decides whether to send it.
 6. **Content-free telemetry**: route, categories and policy version only.
 
 ### 7.2 Routes (software routing states, not clinical levels)
@@ -321,11 +347,12 @@ Verified 24 Nov 2026 against primary sources: **India** Tele-MANAS 14416 / 1-800
 | `tests/emotion.test.ts` | 11 | sklearn parity (6), fusion agreement, disagreement → abstain, low quality → abstain, correction wins, no repeated hints |
 | `tests/orchestrator.test.ts` | 12 | Demo mode, Just Listen suppression, Problem Solver proposals, immediate bypass, safety overrides every mode, self-report, distress choices; with a **stub OpenAI-compatible server**: model reply + fusion, output guard blocks diagnosis, disallowed proposals dropped, sensitive memory rejected, escalation capped |
 | `tests/insights.test.ts` | 5 | No zero-fill, daily means, ≥ 3 days, observation wording, memory retrieval |
-| `scripts/check-migration.mjs` (PGlite) | 12 | Profile trigger, cross-tenant read blocked, cross-tenant message insert blocked, cross-user approve blocked, edited payload applied, idempotent approve, expired = no side effect, memory consent, sample data seed/isolate/remove, account-deletion cascade |
+| `tests/resilience.test.ts` | 4 | JSON parsing of reasoning-model output, model fallback when a quota is used up, busy fallback reply, safety still routed when every model is limited |
+| `scripts/check-migration.mjs` (PGlite) | 18 | Table grants come from the migration itself, profile trigger, cross-tenant read blocked, cross-tenant message insert blocked, cross-user approve blocked, edited payload applied, idempotent approve, expired = no side effect, memory consent, sample data seed/isolate/remove, keep-alive for signed-out callers, signed-out visitors can't read tables, onboarding writes succeed, trusted contacts private, account-deletion cascade |
 | Build | n/a | `tsc` clean, ESLint 0 errors, `next build` succeeds |
 | Visual | n/a | Headless Chrome screenshots of every main screen at desktop and mobile widths (`docs/screenshots/`) |
 
-**Total: 45 automated tests + 12 database checks**, all passing, and run in CI on every push (`.github/workflows/ci.yml`).
+**Total: 49 automated tests + 18 database checks**, all passing, and run in CI on every push (`.github/workflows/ci.yml`).
 
 ### 11.2 Evaluation plan (next)
 1. **Emotion:** run DistilRoBERTa and the LLM zero-shot on the same GoEmotions test split. Report per-class P/R/F1, confusion, ECE, then set fusion weights from the validation results. Add language and noise subgroups (Hinglish samples, typos).
@@ -347,6 +374,8 @@ Verified 24 Nov 2026 against primary sources: **India** Tele-MANAS 14416 / 1-800
 | Raw audio | Streamed to the provider, never written to disk, storage or DB |
 | CSRF | Supabase cookies are `SameSite=Lax` (cross-site POSTs don't carry them). JSON endpoints need a CORS preflight cross-origin |
 | Abuse | Per-user hourly and daily AI limits, plus Supabase's anonymous sign-in limit (30/hour/IP by default) |
+| Least privilege | Only `authenticated` has table grants. Signed-out visitors can call `keepalive()` and nothing else |
+| Retention | Guest (anonymous) accounts and all their rows are deleted after 30 days by the daily job |
 | Headers | `X-Frame-Options: DENY`, `nosniff`, strict referrer, microphone limited to self |
 | Data rights | Export JSON + readable text. Per-item delete. Account delete cascades everything. Consent revocation (emotion history revocation deletes stored hints) |
 | Honesty | Privacy page explains provider processing and doesn't promise zero retention |
@@ -383,7 +412,7 @@ Verified 24 Nov 2026 against primary sources: **India** Tele-MANAS 14416 / 1-800
 3. Fusion weights for the LLM and transformer are provisional.
 4. LLM replies can still be unhelpful or off-tone. The output guard catches categories of harm, not quality.
 5. Free-tier dependencies: Groq limits, Supabase pausing, Hugging Face availability.
-6. Anonymous guest accounts can't be recovered after sign-out unless the user adds an email.
+6. Anonymous guest accounts can't be recovered after sign-out unless the user adds an email, and they're deleted after 30 days.
 7. No automated accessibility audit yet (axe), and no E2E browser tests against a live database yet.
 
 ---
@@ -447,6 +476,15 @@ A: Build the evaluation harness first, so fusion weights and safety thresholds c
 **Q: How does the app avoid creating dependency?**
 A: Product rules: no streaks, no "we miss you" messages, no claims of love or exclusivity (blocked by the output guard), regular nudges toward people the user trusts, and a North Star based on helpfulness rather than time spent.
 
+**Q: How does it stay online for free, 24/7?**
+A: Vercel Hobby doesn't sleep. A daily cron keeps the Supabase project active and cleans up guest accounts older than 30 days. The LLM adapter falls back across four free Groq models when one hits its quota, and if all are busy the app still replies with a deterministic responder. Safety never depends on the LLM.
+
+**Q: Tell me about a bug you hit in production.**
+A: Onboarding failed on the live site with a generic save error. The logs showed Postgres 42501, permission denied. Supabase had changed its defaults so new tables aren't exposed to the API roles without explicit grants, and my test environment granted access itself, so it never failed locally. I added a least-privilege grants migration, changed the test to rely only on the migration, and added a test for the exact onboarding writes. The lesson was to make the test environment start from production's permissions.
+
+**Q: Why Groq and not OpenAI or Gemini?**
+A: Permanent free tier, very fast responses, OpenAI-compatible API and Whisper on the same key. Gemini's free tier allows human review of prompts, which I didn't want for well-being conversations. Because the adapter is OpenAI-compatible, switching providers is a configuration change.
+
 **Q: What did you learn?**
 A: That the hard part of "empathetic AI" is mostly not the model. It's deciding which decisions a model may make, measuring honestly (even when calm scores 0.11), and designing for failure: abstain, degrade gracefully, never fake success.
 
@@ -455,7 +493,7 @@ A: That the hard part of "empathetic AI" is mostly not the model. It's deciding 
 ## 18. Demo script (4 minutes)
 
 1. **Landing (20 s).** "Research prototype, not clinical. Notice the help link works without signing in."
-2. **Guest sign-in + onboarding (30 s).** Point out the adult check, the AI disclosure and the separate consents, with memory off by default.
+2. **Guest sign-in + onboarding (30 s).** Point out the adult check, the AI disclosure, the optional trusted person, and the separate consents, with memory off by default.
 3. **Just Listen (40 s).** Type "Work has been crushing me and I can't switch off." Show the reply reflects without advice. Show the emotion hint, then correct it ("not quite?" → frustration). Explain that the correction becomes authoritative self-report.
 4. **Ask for a plan (40 s).** "Can you make me a plan for tomorrow?" The approval card appears even in Just Listen because you asked explicitly. Edit a task, approve, open Tasks. Click approve twice to show there are no duplicates.
 5. **Voice (20 s).** Record a sentence, then show the editable transcript and say audio isn't stored.
