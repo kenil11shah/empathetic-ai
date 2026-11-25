@@ -86,6 +86,11 @@ export function dbError(error: { code?: string; message?: string } | null, what 
   if (error.code === "23514" || error.code === "22P02" || error.code === "22007")
     throw new ApiError(400, "invalid_input", `That ${what} has an invalid value.`);
   if (error.code === "23505") throw new ApiError(409, "conflict", `That ${what} already exists.`);
+  // Missing grants, tables or columns mean the database setup SQL has not been fully run.
+  if (error.code === "42501" || error.code === "42P01" || error.code === "42703" || error.code === "PGRST204" || error.code === "PGRST205") {
+    console.error(`[db] ${error.code} while handling ${what}: database setup incomplete`);
+    throw new ApiError(503, "db_setup_incomplete", "The app's database isn't fully set up yet. Please try again later.");
+  }
   console.error(`[db] ${error.code ?? "unknown"} while handling ${what}`);
   throw new ApiError(500, "db_error", "We couldn't save that just now. Please try again.");
 }
